@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الحروف العربية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800&display=swap');
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f0f9ff; /* Light blue bg */
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        /* Animations */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        .animate-bounce-custom {
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-popIn {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-hover:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-active:active {
+            transform: scale(0.95);
+        }
+
+        /* Hide sections initially */
+        .hidden-screen {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-4">
+
+    <!-- Header -->
+    <header class="w-full max-w-3xl text-center py-4">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-blue-600 drop-shadow-md">✨ أبطال الحروف ✨</h1>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="flex-grow flex items-center justify-center w-full max-w-3xl">
+        
+        <!-- ================= SETUP SCREEN ================= -->
+        <div id="setup-screen" class="bg-white rounded-3xl shadow-xl p-8 w-full animate-popIn text-center border-4 border-yellow-400">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-700 mb-6">مرحباً يا بطل! 👋</h2>
+            <p class="text-lg text-gray-600 mb-8">دعنا نختار الحروف التي سنلعب بها اليوم:</p>
+            
+            <div class="flex flex-col md:flex-row justify-center items-center gap-6 mb-8">
+                <div class="w-full md:w-1/2">
+                    <label class="block text-xl font-bold text-blue-500 mb-2">من حرف:</label>
+                    <select id="start-letter" class="w-full text-3xl p-4 rounded-xl border-2 border-blue-300 bg-blue-50 text-center focus:outline-none focus:border-blue-500 cursor-pointer">
+                        <!-- Options filled by JS -->
+                    </select>
+                </div>
+                <div class="w-full md:w-1/2">
+                    <label class="block text-xl font-bold text-green-500 mb-2">إلى حرف:</label>
+                    <select id="end-letter" class="w-full text-3xl p-4 rounded-xl border-2 border-green-300 bg-green-50 text-center focus:outline-none focus:border-green-500 cursor-pointer">
+                        <!-- Options filled by JS -->
+                    </select>
+                </div>
+            </div>
+
+            <button id="start-btn" class="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-3xl font-bold py-4 px-12 rounded-full shadow-lg btn-hover btn-active border-b-4 border-yellow-600 transition-all">
+                ابدأ اللعبة 🚀
+            </button>
+        </div>
+
+        <!-- ================= GAME SCREEN ================= -->
+        <div id="game-screen" class="bg-white rounded-3xl shadow-xl p-6 md:p-8 w-full hidden-screen relative border-4 border-blue-400 min-h-[400px] flex flex-col justify-between">
+            
+            <!-- Activity Header -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-bold text-lg border border-blue-200">
+                    النشاط: <span id="activity-number">1</span> / 5
+                </div>
+                <div class="bg-green-100 text-green-700 px-4 py-2 rounded-full font-bold text-lg border border-green-200">
+                    النقاط: <span id="score-display">0</span> ⭐
+                </div>
+            </div>
+
+            <!-- Activity Container (Content updates dynamically) -->
+            <div id="activity-container" class="flex-grow flex flex-col items-center justify-center animate-popIn">
+                <!-- Dynamic Content injected here -->
+            </div>
+
+            <!-- Feedback Overlay (Hidden by default) -->
+            <div id="feedback-message" class="absolute inset-0 flex items-center justify-center bg-white/90 rounded-3xl z-10 hidden">
+                <div class="text-center animate-bounce-custom">
+                    <div id="feedback-emoji" class="text-6xl mb-4">🎉</div>
+                    <div id="feedback-text" class="text-4xl font-bold text-green-500">أحسنت!</div>
+                </div>
+            </div>
+
+            <!-- Next Activity Button -->
+            <div class="mt-6 flex justify-center h-16">
+                <button id="next-btn" class="hidden bg-blue-500 text-white text-2xl font-bold py-3 px-8 rounded-full shadow-md btn-hover btn-active transition-all">
+                    النشاط التالي ➡️
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= END SCREEN ================= -->
+        <div id="end-screen" class="bg-white rounded-3xl shadow-xl p-8 w-full hidden-screen text-center border-4 border-green-400">
+            <div class="text-6xl mb-4 animate-bounce-custom">🏆</div>
+            <h2 class="text-4xl font-bold text-green-500 mb-4">بطل رائع!</h2>
+            <p class="text-2xl text-gray-700 mb-6">لقد أنهيت جميع الأنشطة بنجاح!</p>
+            <div class="text-3xl font-bold text-yellow-500 mb-8 bg-yellow-50 p-4 rounded-xl inline-block">
+                نتيجتك: <span id="final-score">0</span> نجوم ⭐
+            </div>
+            
+            <div class="flex flex-col md:flex-row justify-center gap-4">
+                <button id="play-again-btn" class="bg-green-500 text-white text-2xl font-bold py-3 px-8 rounded-full shadow-md btn-hover btn-active transition-all">
+                    العب مرة أخرى 🔄
+                </button>
+                <button id="change-range-btn" class="bg-purple-500 text-white text-2xl font-bold py-3 px-8 rounded-full shadow-md btn-hover btn-active transition-all">
+                    تغيير الحروف ⚙️
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-4 text-gray-500 font-bold mt-4">
+        إعداد المعلمة: سارة نبيل
+    </footer>
+
+    <!-- Audio Context for Success Sound -->
+    <script>
+        // Data Configuration
+        const ALPHABET = ['أ', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل', 'م', 'ن', 'هـ', 'و', 'ي'];
+        
+        const EMOJI_DICT = {
+            'أ': '🐇', 'ب': '🦆', 'ت': '🍎', 'ث': '🦊', 'ج': '🐪', 'ح': '🐴', 
+            'خ': '🐑', 'د': '🐻', 'ذ': '🌽', 'ر': '🪶', 'ز': '🦒', 'س': '🐟', 
+            'ش': '🌳', 'ص': '🦅', 'ض': '🐸', 'ط': '✈️', 'ظ': '✉️', 'ع': '🐦', 
+            'غ': '☁️', 'ف': '🐘', 'ق': '🐒', 'ك': '🐶', 'ل': '🍋', 'م': '🍌', 
+            'ن': '🐅', 'هـ': '🚁', 'و': '🌹', 'ي': '🤚'
+        };
+
+        // Game State
+        let gameState = {
+            startIdx: 0,
+            endIdx: 27,
+            availableLetters: [],
+            currentActivity: 1,
+            score: 0,
+            targetLetter: '',
+            isActivityCompleted: false
+        };
+
+        // DOM Elements
+        const screens = {
+            setup: document.getElementById('setup-screen'),
+            game: document.getElementById('game-screen'),
+            end: document.getElementById('end-screen')
+        };
+        const selects = {
+            start: document.getElementById('start-letter'),
+            end: document.getElementById('end-letter')
+        };
+        const elements = {
+            activityContainer: document.getElementById('activity-container'),
+            activityNumber: document.getElementById('activity-number'),
+            scoreDisplay: document.getElementById('score-display'),
+            nextBtn: document.getElementById('next-btn'),
+            feedbackMessage: document.getElementById('feedback-message'),
+            feedbackEmoji: document.getElementById('feedback-emoji'),
+            feedbackText: document.getElementById('feedback-text'),
+            finalScore: document.getElementById('final-score')
+        };
+
+        // Initialization
+        function init() {
+            populateDropdowns();
+            bindEvents();
+        }
+
+        function populateDropdowns() {
+            let optionsHTML = '';
+            ALPHABET.forEach((letter, index) => {
+                optionsHTML += `<option value="${index}">${letter}</option>`;
+            });
+            selects.start.innerHTML = optionsHTML;
+            selects.end.innerHTML = optionsHTML;
+            
+            // Set defaults
+            selects.start.value = "0";
+            selects.end.value = "27";
+        }
+
+        function bindEvents() {
+            document.getElementById('start-btn').addEventListener('click', startGame);
+            elements.nextBtn.addEventListener('click', nextActivity);
+            document.getElementById('play-again-btn').addEventListener('click', () => {
+                resetGameState();
+                showScreen('game');
+                loadActivity();
+            });
+            document.getElementById('change-range-btn').addEventListener('click', () => {
+                showScreen('setup');
+            });
+            
+            // Ensure end index is always >= start index
+            selects.start.addEventListener('change', () => {
+                if (parseInt(selects.end.value) < parseInt(selects.start.value)) {
+                    selects.end.value = selects.start.value;
+                }
+            });
+            selects.end.addEventListener('change', () => {
+                if (parseInt(selects.end.value) < parseInt(selects.start.value)) {
+                    selects.start.value = selects.end.value;
+                }
+            });
+        }
+
+        function showScreen(screenName) {
+            Object.values(screens).forEach(s => s.classList.add('hidden-screen'));
+            screens[screenName].classList.remove('hidden-screen');
+        }
+
+        // Utilities
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function shuffleArray(array) {
+            let curr = array.length, temp, rand;
+            while (curr !== 0) {
+                rand = Math.floor(Math.random() * curr);
+                curr--;
+                temp = array[curr];
+                array[curr] = array[rand];
+                array[rand] = temp;
+            }
+            return array;
+        }
+
+        function getMultipleRandomChoices(correctAnswer, arrayPool, count) {
+            let choices = [correctAnswer];
+            let pool = arrayPool.filter(item => item !== correctAnswer);
+            
+            while (choices.length < count) {
+                if (pool.length === 0) pool = [...arrayPool]; // Fallback if pool is empty
+                let randomItem = getRandomItem(pool);
+                if (!choices.includes(randomItem)) {
+                    choices.push(randomItem);
+                } else if (pool.length < count) {
+                     // In case of very small range (e.g., 2 letters), allow duplicates to fill choices
+                     choices.push(randomItem);
+                }
+            }
+            return shuffleArray(choices);
+        }
+
+        // Core Game Logic
+        function startGame() {
+            gameState.startIdx = parseInt(selects.start.value);
+            gameState.endIdx = parseInt(selects.end.value);
+            gameState.availableLetters = ALPHABET.slice(gameState.startIdx, gameState.endIdx + 1);
+            
+            resetGameState();
+            showScreen('game');
+            loadActivity();
+        }
+
+        function resetGameState() {
+            gameState.currentActivity = 1;
+            gameState.score = 0;
+            elements.scoreDisplay.innerText = gameState.score;
+        }
+
+        function nextActivity() {
+            gameState.currentActivity++;
+            elements.nextBtn.classList.add('hidden');
+            
+            if (gameState.currentActivity > 5) {
+                endGame();
+            } else {
+                loadActivity();
+            }
+        }
+
+        function endGame() {
+            showScreen('end');
+            elements.finalScore.innerText = gameState.score;
+        }
+
+        function handleAnswer(selectedLetter, isCorrect, btnElement) {
+            if (gameState.isActivityCompleted) return;
+
+            if (isCorrect) {
+                gameState.isActivityCompleted = true;
+                gameState.score++;
+                elements.scoreDisplay.innerText = gameState.score;
+                
+                // Success styling
+                btnElement.classList.remove('bg-white');
+                btnElement.classList.add('bg-green-400', 'text-white', 'border-green-500');
+
+                // Show Feedback Overlay
+                elements.feedbackEmoji.innerText = getRandomItem(['🎉', '🌟', '🏆', '👏']);
+                elements.feedbackText.innerText = getRandomItem(['أحسنت!', 'بطل!', 'ممتاز!', 'رائع!']);
+                elements.feedbackText.className = 'text-5xl font-bold text-green-500';
+                elements.feedbackMessage.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    elements.feedbackMessage.classList.add('hidden');
+                    elements.nextBtn.classList.remove('hidden');
+                    
+                    // Specific logic for finishing activity 5 immediately since it's the last
+                    if(gameState.currentActivity === 5) {
+                         elements.nextBtn.innerText = "إنهاء اللعبة 🏁";
+                    } else {
+                         elements.nextBtn.innerText = "النشاط التالي ➡️";
+                    }
+
+                }, 1500);
+
+            } else {
+                // Wrong styling
+                btnElement.classList.add('animate-shake', 'bg-red-100', 'border-red-400');
+                setTimeout(() => {
+                    btnElement.classList.remove('animate-shake');
+                }, 400);
+            }
+        }
+
+        // Build Activity UI Helpers
+        function createChoiceButton(letter, isCorrect) {
+            const btn = document.createElement('button');
+            btn.className = "text-5xl font-bold p-6 w-24 h-24 md:w-32 md:h-32 bg-white rounded-2xl shadow-lg border-b-4 border-gray-300 flex items-center justify-center btn-hover btn-active text-blue-800 m-2";
+            btn.innerText = letter;
+            btn.onclick = () => handleAnswer(letter, isCorrect, btn);
+            return btn;
+        }
+
+        // ================= ACTIVITIES =================
+
+        function loadActivity() {
+            gameState.isActivityCompleted = false;
+            elements.activityNumber.innerText = gameState.currentActivity;
+            elements.activityContainer.innerHTML = ''; // Clear previous
+
+            // If range is too small for sequences, fallback Act 5 to Act 1
+            let activityToLoad = gameState.currentActivity;
+            if (activityToLoad === 5 && gameState.availableLetters.length < 3) {
+                activityToLoad = 1;
+            }
+
+            switch(activityToLoad) {
+                case 1: loadActivity1(); break;
+                case 2: loadActivity2(); break;
+                case 3: loadActivity3(); break;
+                case 4: loadActivity4(); break;
+                case 5: loadActivity5(); break;
+            }
+        }
+
+        // Activity 1: Match Letter
+        function loadActivity1() {
+            gameState.targetLetter = getRandomItem(gameState.availableLetters);
+            const choices = getMultipleRandomChoices(gameState.targetLetter, gameState.availableLetters, 3);
+
+            const title = document.createElement('h3');
+            title.className = "text-3xl font-bold text-gray-700 mb-6";
+            title.innerText = "أين الحرف المطابق؟";
+
+            const targetBox = document.createElement('div');
+            targetBox.className = "text-8xl font-bold text-purple-600 bg-purple-100 p-8 rounded-3xl mb-8 border-4 border-purple-300 shadow-inner";
+            targetBox.innerText = gameState.targetLetter;
+
+            const choicesContainer = document.createElement('div');
+            choicesContainer.className = "flex justify-center gap-4 flex-wrap";
+            
+            choices.forEach(letter => {
+                choicesContainer.appendChild(createChoiceButton(letter, letter === gameState.targetLetter));
+            });
+
+            elements.activityContainer.appendChild(title);
+            elements.activityContainer.appendChild(targetBox);
+            elements.activityContainer.appendChild(choicesContainer);
+        }
+
+        // Activity 2: Find the Different Letter (Soundless)
+        function loadActivity2() {
+            if (gameState.availableLetters.length < 2) {
+                return loadActivity1(); // Fallback if only 1 letter in range
+            }
+
+            let letterA = getRandomItem(gameState.availableLetters);
+            let letterB = getRandomItem(gameState.availableLetters.filter(l => l !== letterA));
+            gameState.targetLetter = letterB;
+
+            let choices = [letterA, letterA, letterB];
+            choices = shuffleArray(choices);
+
+            const title = document.createElement('h3');
+            title.className = "text-3xl font-bold text-gray-700 mb-6";
+            title.innerText = "أين الحرف المختلف؟";
+
+            const choicesContainer = document.createElement('div');
+            choicesContainer.className = "flex justify-center gap-4 flex-wrap";
+            
+            choices.forEach(letter => {
+                choicesContainer.appendChild(createChoiceButton(letter, letter === gameState.targetLetter));
+            });
+
+            elements.activityContainer.appendChild(title);
+            elements.activityContainer.appendChild(choicesContainer);
+        }
+
+        // Activity 3: Picture to Letter
+        function loadActivity3() {
+            gameState.targetLetter = getRandomItem(gameState.availableLetters);
+            const choices = getMultipleRandomChoices(gameState.targetLetter, gameState.availableLetters, 3);
+            const emoji = EMOJI_DICT[gameState.targetLetter] || '❓';
+
+            const title = document.createElement('h3');
+            title.className = "text-3xl font-bold text-gray-700 mb-6 text-center";
+            title.innerText = "بأي حرف تبدأ هذه الصورة؟";
+
+            const picBox = document.createElement('div');
+            picBox.className = "text-8xl bg-orange-50 p-8 rounded-3xl mb-8 border-4 border-orange-200 shadow-sm";
+            picBox.innerText = emoji;
+
+            const choicesContainer = document.createElement('div');
+            choicesContainer.className = "flex justify-center gap-4 flex-wrap";
+            
+            choices.forEach(letter => {
+                choicesContainer.appendChild(createChoiceButton(letter, letter === gameState.targetLetter));
+            });
+
+            elements.activityContainer.appendChild(title);
+            elements.activityContainer.appendChild(picBox);
+            elements.activityContainer.appendChild(choicesContainer);
+        }
+
+        // Activity 4: Find the Letter (Grid)
+        function loadActivity4() {
+            gameState.targetLetter = getRandomItem(gameState.availableLetters);
+            const choices = getMultipleRandomChoices(gameState.targetLetter, gameState.availableLetters, 6); // 6 items grid
+
+            const title = document.createElement('h3');
+            title.className = "text-3xl font-bold text-gray-700 mb-6";
+            title.innerHTML = `ابحث عن حرف <span class="text-red-500 text-4xl">(${gameState.targetLetter})</span>`;
+
+            const gridContainer = document.createElement('div');
+            gridContainer.className = "grid grid-cols-3 gap-4 md:gap-6";
+            
+            const colors = ['bg-pink-100', 'bg-blue-100', 'bg-green-100', 'bg-yellow-100', 'bg-purple-100', 'bg-orange-100'];
+            let colorIdx = 0;
+
+            choices.forEach(letter => {
+                const btn = document.createElement('button');
+                const isCorrect = letter === gameState.targetLetter;
+                btn.className = `text-5xl font-bold w-20 h-20 md:w-28 md:h-28 rounded-2xl shadow border-b-4 border-gray-300 flex items-center justify-center btn-hover btn-active text-gray-800 ${colors[colorIdx % colors.length]}`;
+                btn.innerText = letter;
+                btn.onclick = () => handleAnswer(letter, isCorrect, btn);
+                gridContainer.appendChild(btn);
+                colorIdx++;
+            });
+
+            elements.activityContainer.appendChild(title);
+            elements.activityContainer.appendChild(gridContainer);
+        }
+
+        // Activity 5: Complete Sequence
+        function loadActivity5() {
+            // Find a valid sequence of 3 inside the user's selected range
+            const maxSeqStart = gameState.endIdx - 2;
+            const seqStartIdx = Math.floor(Math.random() * (maxSeqStart - gameState.startIdx + 1)) + gameState.startIdx;
+            
+            const sequence = [ALPHABET[seqStartIdx], ALPHABET[seqStartIdx+1], ALPHABET[seqStartIdx+2]];
+            const missingPos = Math.floor(Math.random() * 3); // 0, 1, or 2
+            gameState.targetLetter = sequence[missingPos];
+            
+            const choices = getMultipleRandomChoices(gameState.targetLetter, gameState.availableLetters, 3);
+
+            const title = document.createElement('h3');
+            title.className = "text-3xl font-bold text-gray-700 mb-8";
+            title.innerText = "أكمل الحرف الناقص:";
+
+            const seqContainer = document.createElement('div');
+            seqContainer.className = "flex justify-center items-center gap-4 md:gap-8 mb-12"; // Flow naturally in RTL
+
+            sequence.forEach((letter, index) => {
+                const box = document.createElement('div');
+                box.className = "w-20 h-20 md:w-24 md:h-24 flex items-center justify-center rounded-xl text-5xl font-bold border-4";
+                
+                if (index === missingPos) {
+                    box.classList.add('border-dashed', 'border-gray-400', 'bg-gray-50', 'text-gray-300');
+                    box.innerText = "?";
+                } else {
+                    box.classList.add('border-blue-300', 'bg-blue-100', 'text-blue-800');
+                    box.innerText = letter;
+                }
+                seqContainer.appendChild(box);
+            });
+
+            const choicesContainer = document.createElement('div');
+            choicesContainer.className = "flex justify-center gap-4 flex-wrap";
+            
+            choices.forEach(letter => {
+                choicesContainer.appendChild(createChoiceButton(letter, letter === gameState.targetLetter));
+            });
+
+            elements.activityContainer.appendChild(title);
+            elements.activityContainer.appendChild(seqContainer);
+            elements.activityContainer.appendChild(choicesContainer);
+        }
+
+        // Run Init
+        window.onload = init;
+
+    </script>
+</body>
+</html>
